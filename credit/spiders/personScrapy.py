@@ -11,8 +11,8 @@ from credit.items import *
 import base64
 import json
 class PersonageCreditt(Spider):
-    download_delay=1
-    name = 'person'
+    download_delay=0
+    name = 'credit'
     handle_httpstatus_all = True
     writeInFile = "personMore"
     start_urls = ['http://shixin.court.gov.cn/personMore.do']
@@ -28,7 +28,7 @@ class PersonageCreditt(Spider):
         try:
             total = hxs.xpath(u"//a[contains(text(),'尾页')]/@onclick").extract()[0]
             total = int(re.findall("\d+",total)[0])
-            for i in range(1,total+1)[0:5]:
+            for i in range(1,total+1):
                 yield FormRequest(response.url,
                         formdata={'currentPage': str(i)},
                         headers = {'User-Agent':'Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US; rv:1.9.1.6) Gecko/20091201 Firefox/3.5.6'},
@@ -69,7 +69,6 @@ class PersonageCreditt(Spider):
     def detail(self,response):
         if response.status == 200:
             jsonresponse = json.loads(response.body_as_unicode())
-            print jsonresponse
             item =PersonMore()
             try:
                 item["cid"] = jsonresponse["id"]
@@ -98,34 +97,5 @@ class PersonageCreditt(Spider):
             except Exception,e:
                 log.msg("item error_info=%s url=%s item_key=%s" %(e, response.url,"\001".join(str(i) for i in [item.values()])), level=log.ERROR)
             yield item       
-            '''
-            hxs = response.selector
-            body = response.body
-            djson = eval(body)
-            try:
-                item['cid'] = self.for_ominated_data(djson, 'id', response)
-                item['name'] = self.for_ominated_data(djson, 'iname', response)
-                item['caseCode'] =  self.for_ominated_data(djson, 'caseCode', response)
-                item['age'] = self.for_ominated_data(djson, 'age',response)
-                item['sex'] = self.for_ominated_data(djson, 'sexy', response)
-                #item['focusNumber'] = djson['focusNumber']
-                item['cardNum'] = self.for_ominated_data(djson, 'cardNum',response)
-                item['courtName'] = self.for_ominated_data(djson, 'courtName', response)
-                item['areaName'] = self.for_ominated_data(djson, 'areaName', response)
-                item['partyTypeName'] = self.for_ominated_data(djson, 'partyTypeName', response)
-                item['gistId'] = self.for_ominated_data(djson, 'gistId', response)
-                item['regDate'] = self.for_ominated_data(djson, 'regDate', response)
-                item['gistUnit'] = self.for_ominated_data(djson, 'gistUnit', response)
-                item['duty'] = self.for_ominated_data(djson, 'duty', response)
-                item['performance']= self.for_ominated_data(djson, 'performance', response)
-                item['disruptTypeName'] = self.for_ominated_data(djson, 'disruptTypeName', response)
-                item['publishDate'] = self.for_ominated_data(djson,'publishDate',response)
-                #print item['cid'],item['name'],item['caseCode'],item['duty']
-                #print "-------------------",item
-                #yield item
-            except Exception,e:
-                log.msg("item error_info=%s url=%s item_key=%s" %(e, response.url,"\001".join(str(i) for i in [item.values()])), level=log.ERROR)
-            yield item
-            '''
         else:
             log.msg("undownloaded info url=%s"%meta["url"],level=log.ERROR)   #如果请求不成功（状态码不为200）记录下来
