@@ -10,36 +10,69 @@ import re
 from credit.items import *
 import base64
 import json
-class PersonageCreditt(Spider):
+from scrapy.utils.response import get_base_url
+import logging
+logger = logging.getLogger(__name__)
+class PersonageCredit(Spider):
     download_delay=0
+    download_timeout=30
     name = 'credit'
     handle_httpstatus_all = True
     writeInFile = "personMore"
     start_urls = ['http://shixin.court.gov.cn/personMore.do']
     allowed_domains=['shixin.court.gov.cn']
+    startIdx = 545
+    step = 1
+    total = 0
+    dont_repush = False
     def __init__(self):
+        self.queue = None
+        self.df = None
+        self.collection = None
         pass
-
+    
     def make_requests_from_url(self,url):
         return Request(url, callback=self.gettotal,dont_filter=True)
-
+    
+    def set_level(self, level):
+        try:
+            logging.root.setLevel(level)
+            #self.log(logger.level,logging.root.level,logger.root.level,)
+           
+            for key,value in logger.manager.loggerDict.items():
+                try:
+                    level = logging._checkLevel(level)
+                    value.level = level
+                except Exception as e:
+                    print key, "Error %s" % e
+                    pass
+        except Exception as e:
+            logger.error("%(exception)s", {'exception':e})
+    def get_level(self, level):
+        print logger.getLevelName(level)
+    def check_result_before_close(self, url):
+        return Request(url, callback=self.detail,meta={'url':url})
+        pass
     def gettotal(self,response):
         hxs = response.selector
         try:
             total = hxs.xpath(u"//a[contains(text(),'尾页')]/@onclick").extract()[0]
             total = int(re.findall("\d+",total)[0])
-            for i in range(1,total+1):
+            self.total = total
+            endIdx = self.startIdx + self.step
+            for i in range(1,total+1)[self.startIdx:endIdx]:
                 yield FormRequest(response.url,
                         formdata={'currentPage': str(i)},
-                        headers = {'User-Agent':'Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US; rv:1.9.1.6) Gecko/20091201 Firefox/3.5.6'},
+                        #headers = {'User-Agent':'Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US; rv:1.9.1.6) Gecko/20091201 Firefox/3.5.6'},
                         callback=self.listpare,dont_filter=True, meta={'pageNum':str(i)})
         except Exception, e:
             log.msg("total error_info=%s, url=%s" %(e, response.url),level=log.ERROR)
-
     def listpare(self, response):
         if response.status == 200:
             hxs = response.selector
             datalist =  hxs.xpath("//table[@id='Resultlist']/tbody/tr[position()>1]")
+            base_url = get_base_url(response)
+            item = PersonMore()
             if len(datalist) == 0:
                 log.msg("datalist_empty error_info=%s, url=%s,pageNum=%s" %(e, response.url,meta['pageNum']),level=log.ERROR)
             try:
@@ -50,6 +83,9 @@ class PersonageCreditt(Spider):
                     id = da.xpath('./td[6]/a/@id').extract()[0]
                     url ="http://shixin.court.gov.cn/detail?id=%s" % id
                     yield Request(url,callback=self.detail,meta={'url':url})
+                    
+                    item["detailLink"] = url
+                    #yield item
             except Exception,e:
                 log.msg("datalist error_info=%s, url=%s,pageNum=%s" %(e, response.url,meta['pageNum']),level=log.ERROR)
         else:
@@ -69,7 +105,8 @@ class PersonageCreditt(Spider):
     def detail(self,response):
         if response.status == 200:
             jsonresponse = json.loads(response.body_as_unicode())
-            item =PersonMore()
+            base_url = get_base_url(response)
+            item = PersonMore()
             try:
                 item["cid"] = jsonresponse["id"]
                 item["name"] = jsonresponse["iname"]
@@ -94,6 +131,7 @@ class PersonageCreditt(Spider):
                 #    item["unperformPart"] = "NA"
                 item["disruptTypeName"] = jsonresponse["disruptTypeName"]
                 item["publishDate"] = jsonresponse["publishDate"]
+                item["detailLink"] = base_url
             except Exception,e:
                 log.msg("item error_info=%s url=%s item_key=%s" %(e, response.url,"\001".join(str(i) for i in [item.values()])), level=log.ERROR)
             yield item       
