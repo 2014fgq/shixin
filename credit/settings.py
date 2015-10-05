@@ -46,7 +46,9 @@ ITEM_PIPELINES = {
 
 EXTENSIONS = {
     'credit.extension.UShell_server.UShellConsole': 0,
+    'scrapy.telnet.TelnetConsole': None,
     'credit.extension.shixin.shixin_extension': 0,
+    'credit.extension.telnet.UTelnet': 0,
 }
 
 MONGODB_URI = 'mongodb://192.168.1.200:27017'
@@ -69,5 +71,5 @@ USHELLCONSOLE_PORT = [31500, 31600]
 USHELLCONSOLE_HOST = '0.0.0.0'
 
 CRAWLERA_ENABLED = True
-CRAWLERA_USER = '28a90baf522b4068a5fb93bf028b95ff'
-CRAWLERA_PASS = 'nh917355**'
+CRAWLERA_USER = ''
+CRAWLERA_PASS = '********'

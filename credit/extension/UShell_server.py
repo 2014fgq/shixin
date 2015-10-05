@@ -28,6 +28,19 @@ logger = logging.getLogger(__name__)
 def est(args):
     print_engine_status(ushell.crawler.engine)
 
+def set_level(self, level):
+    try:
+        logging.root.setLevel(level)
+        for key,value in logger.manager.loggerDict.items():
+            try:
+                level = logging._checkLevel(level)
+                value.level = level
+            except Exception as e:
+                print key, "Error %s" % e
+                pass
+    except Exception as e:
+        logger.error("%(exception)s", {'exception':e})
+
 class UShellConsole(threading.Thread):
     def __init__(self, crawler):
         threading.Thread.__init__(self)
@@ -79,10 +92,11 @@ class UShellConsole(threading.Thread):
         obj = cls(crawler)
         crawler.signals.connect(obj.start_listening, signals.engine_started)
         crawler.signals.connect(obj.stop_listening, signals.engine_stopped)
+        crawler.ushell = obj
         global ushell
         ushell = obj
         return obj
-    
+        
     def Run_syscmd(self, cmd):
         p = subprocess.Popen(cmd, shell=True)
         stdout, stderr = p.communicate()
