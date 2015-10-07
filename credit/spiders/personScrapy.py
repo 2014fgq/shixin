@@ -19,10 +19,12 @@ class PersonageCredit(Spider):
     name = 'credit'
     handle_httpstatus_all = True
     writeInFile = "personMore"
-    start_urls = ['http://shixin.court.gov.cn/personMore.do']
+    notest = True
+    #start_urls = ['http://shixin.court.gov.cn/personMore.do']
+    start_urls = ['http://shixin.court.gov.cn/personMore.do'] if notest else ["http://shixin.court.gov.cn/detail?id=%d" % d for d in range(2000000, 3000000, 1)]
     allowed_domains=['shixin.court.gov.cn']
-    startIdx = 545
-    step = 1
+    startIdx = 549
+    step = 8
     total = 0
     dont_repush = False
     def __init__(self):
@@ -32,24 +34,9 @@ class PersonageCredit(Spider):
         pass
     
     def make_requests_from_url(self,url):
-        return Request(url, callback=self.gettotal,dont_filter=True)
+        request = Request(url, callback=self.gettotal,dont_filter=True) if self.notest else Request(url,callback=self.detail,meta={'url':url})
+        return request
     
-    def set_level(self, level):
-        try:
-            logging.root.setLevel(level)
-            #self.log(logger.level,logging.root.level,logger.root.level,)
-           
-            for key,value in logger.manager.loggerDict.items():
-                try:
-                    level = logging._checkLevel(level)
-                    value.level = level
-                except Exception as e:
-                    print key, "Error %s" % e
-                    pass
-        except Exception as e:
-            logger.error("%(exception)s", {'exception':e})
-    def get_level(self, level):
-        print logger.getLevelName(level)
     def check_result_before_close(self, url):
         return Request(url, callback=self.detail,meta={'url':url})
         pass
@@ -66,7 +53,8 @@ class PersonageCredit(Spider):
                         #headers = {'User-Agent':'Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US; rv:1.9.1.6) Gecko/20091201 Firefox/3.5.6'},
                         callback=self.listpare,dont_filter=True, meta={'pageNum':str(i)})
         except Exception, e:
-            log.msg("total error_info=%s, url=%s" %(e, response.url),level=log.ERROR)
+            logger.error("total error_info=%(error)s, url=%(url)s", {'error':e, 'url':response.url})
+            
     def listpare(self, response):
         if response.status == 200:
             hxs = response.selector
@@ -108,29 +96,29 @@ class PersonageCredit(Spider):
             base_url = get_base_url(response)
             item = PersonMore()
             try:
-                item["cid"] = jsonresponse["id"]
-                item["name"] = jsonresponse["iname"]
-                item["caseCode"] = jsonresponse["caseCode"]
-                item["age"] = jsonresponse["age"]
-                item["sex"] = jsonresponse["sexy"]
+                item["cid"] = jsonresponse.get("id", "")
+                item["name"] = jsonresponse.get("iname", '')
+                item["caseCode"] = jsonresponse.get("caseCode", '')
+                item["age"] = jsonresponse.get("age", '')
+                item["sex"] = jsonresponse.get("sexy", '')
                 #item['focusNumber'] = jsonresponse['focusNumber']
-                item["cardNum"] = jsonresponse["cardNum"]
-                item["courtName"] = jsonresponse["courtName"]
-                item["areaName"] = jsonresponse["areaName"]
-                item["partyTypeName"] = jsonresponse["partyTypeName"]
-                item["gistId"] = jsonresponse["gistId"]
-                item["regDate"] = jsonresponse["regDate"]
-                item["gistUnit"] = jsonresponse["gistUnit"]
-                item["duty"] = jsonresponse["duty"]
-                item["performance"] = jsonresponse["performance"]
+                item["cardNum"] = jsonresponse.get("cardNum", '')
+                item["courtName"] = jsonresponse.get("courtName", '')
+                item["areaName"] = jsonresponse.get("areaName", '')
+                item["partyTypeName"] = jsonresponse.get("partyTypeName", '')
+                item["gistId"] = jsonresponse.get("gistId", '')
+                item["regDate"] = jsonresponse.get("regDate", '')
+                item["gistUnit"] = jsonresponse.get("gistUnit", '')
+                item["duty"] = jsonresponse.get("duty", '')
+                item["performance"] = jsonresponse.get("performance", '')
                 #if "performedPart" in json.loads(response.body):
                 #    item["performedPart"] = jsonresponse["performedPart"]
                 #    item["unperformPart"] = jsonresponse["unperformPart"]
                 #else:
                 #    item["performedPart"] = "NA"
                 #    item["unperformPart"] = "NA"
-                item["disruptTypeName"] = jsonresponse["disruptTypeName"]
-                item["publishDate"] = jsonresponse["publishDate"]
+                item["disruptTypeName"] = jsonresponse.get("disruptTypeName", '')
+                item["publishDate"] = jsonresponse.get("publishDate", '')
                 item["detailLink"] = base_url
             except Exception,e:
                 log.msg("item error_info=%s url=%s item_key=%s" %(e, response.url,"\001".join(str(i) for i in [item.values()])), level=log.ERROR)

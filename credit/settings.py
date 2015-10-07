@@ -18,8 +18,8 @@ DNSCACHE_ENABLED = True
 COOKIES_ENABLED = False
 
 CONCURRENT_ITEMS = 100
-CONCURRENT_REQUESTS = 15
-CONCURRENT_REQUESTS_PER_DOMAIN = 10
+CONCURRENT_REQUESTS = 500
+CONCURRENT_REQUESTS_PER_DOMAIN = 400
 CONCURRENT_REQUESTS_PER_IP = 0
 
 #DOWNLOAD_TIMEOUT = 30      # 0.5mins
@@ -36,7 +36,7 @@ DOWNLOADER_MIDDLEWARES = {
     'credit.middlewares.DownloadTimeoutRetryMiddleware': 375,
     'scrapy.contrib.downloadermiddleware.useragent.UserAgentMiddleware': None,
     'credit.contrib.downloadmiddleware.rotate_useragent.RotateUserAgentMiddleware':400,
-    'credit.contrib.downloadmiddleware.scrapy_crawlera.CrawleraMiddleware': 300
+    'credit.contrib.downloadmiddleware.scrapy_crawlera.CrawleraMiddleware': None
 }
 
 ITEM_PIPELINES = {
@@ -70,6 +70,6 @@ USHELLCONSOLE_ENABLED = True
 USHELLCONSOLE_PORT = [31500, 31600]
 USHELLCONSOLE_HOST = '0.0.0.0'
 
-CRAWLERA_ENABLED = True
+CRAWLERA_ENABLED = False
 CRAWLERA_USER = ''
-CRAWLERA_PASS = '********'
+CRAWLERA_PASS = ''

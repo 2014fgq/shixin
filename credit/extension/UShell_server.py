@@ -64,7 +64,7 @@ class UShellConsole(threading.Thread):
         for x in range(portrange[0], portrange[1]+1):
             try:
                 return self.do_bind(host, str(x))
-            except error.CannotListenError:
+            except Exception:
                 if x == portrange[1]:
                     raise
 
@@ -77,7 +77,7 @@ class UShellConsole(threading.Thread):
             self.sock.bind(self.address)
             return Port
             #logger.info('Bind %(IP)s:%(Port)d', {'IP':IP, 'Port':Port})
-        except Exception,e:
+        except Exception as e:
             #logger.error('Bind Fail %(Exception)s', {'Exception':e})
             raise
 
