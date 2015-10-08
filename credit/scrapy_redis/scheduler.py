@@ -66,9 +66,6 @@ class Scheduler(object):
         self.spider = spider
         self.queue = self.queue_cls(self.server, spider, self.queue_key)
         self.df = RFPDupeFilter(self.server, self.dupefilter_key % {'spider': spider.name})
-        #self.crawler.signals.connect(self.df.request_reseen, signals.response_downloaded)
-        self.spider.queue = self.queue
-        self.spider.df = self.df
         # notice if there are requests already in the queue to resume the crawl
         if len(self.queue):
             spider.log("Resuming crawl (%d requests scheduled)" % len(self.queue))

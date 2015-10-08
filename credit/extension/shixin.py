@@ -12,6 +12,7 @@ class shixin_extension(object):
 
     def __init__(self, crawler):
         self.crawler = crawler
+        
         pass
     @classmethod
     def from_crawler(cls, crawler):
@@ -22,45 +23,47 @@ class shixin_extension(object):
         crawler.signals.connect(o.item_dropped, signal=signals.item_dropped)
         crawler.signals.connect(o.response_received, signal=signals.response_received)
         crawler.signals.connect(o.spider_idle, signal=signals.spider_idle)
+        #crawler.signals.connect(o.update_telnet_vars, signal=signals.update_telnet_vars)
         return o
+
+    #def update_telnet_vars(self):
+    #    pass
 
     def add_requests(self, urls):
         try:
             for url in urls:
                 yield self.crawler.spider.check_result_before_close(url)
         except Exception as e:
-            print "add_requests", e
-    def test(self):
+            logger.error("add_requests Error %(error)s",  {'error':e})
+    def reclac_filter_url(self, spider):
         time1= time.time()
+        self.scheduler.df.clear()        
         urls = []
-        for item in self.crawler.spider.collection.find().sort("detailLink",pymongo.ASCENDING):
+        for item in spider.collection.find().sort("detailLink",pymongo.ASCENDING):
             try:
                 urls.append(str(item['detailLink']))
             except:
-                pass
+                cid = str(item['cid'])
+                logger.error("check filer cid [%(cid)s] url [%(url)s] reason [%(Error)s]", {'cid':cid, 'url':url, 'Error':e})
         print time.time() - time1
         time1= time.time()
-        add_requests = self.add_requests(urls)
-        print len(urls)
         while '' in urls:
             urls.remove('')
-        print len(urls)
+        add_requests = self.add_requests(urls)
         print time.time() - time1
 
         time1= time.time()
-        i = 0
         while True:
             try:
-                i=i+1
                 request = add_requests.next()
-                self.crawler.spider.df.request_seen(request)
+                self.scheduler.df.request_seen(request)
             except StopIteration as e:
-                print "StopIteration",e
                 break
             except Exception as e:
-                print "Exception",e
-        print i
+                logger.error("Exception %(error)s", {'error':e})
         print time.time() - time1 
+        logger.info("Reclac the Filter Url use time %(time)ds", {'time':(time.time()-time1)})
+        #logger.info("Reclac the Filter Url use time %(time)d" % (time.time()-time1))
     def test1(self):
         time1= time.time()
         self.reclac_filter_url(self.crawler.spider)
@@ -68,22 +71,23 @@ class shixin_extension(object):
         print time2 - time1    
     def test2(self):
         time1= time.time()
-        self.crawler.spider.df.clear();  
+        self.scheduler.df.clear();  
         time2= time.time()
         print time2 - time1
-    def reclac_filter_url(self, spider):
-        spider.df.clear();
+    def reclac_filter_url1(self, spider):
+        self.scheduler.df.clear();
         for item in spider.collection.find().sort("detailLink",pymongo.ASCENDING):
             try:
                 url = str(item['detailLink'])
-                spider.df.request_seen(spider.check_result_before_close(url))
+                self.scheduler.df.request_seen(spider.check_result_before_close(url))
             except Exception as e:
                 cid = str(item['cid'])
                 logger.error("check filer cid [%(cid)s] url [%(url)s] reason [%(Error)s]", {'cid':cid, 'url':url, 'Error':e})
         logger.info("Reclac the Filter Url!")
         
     def spider_opened(self, spider):
-        #self.reclac_filter_url(spider)
+        self.scheduler = self.crawler.engine.slot.scheduler
+        self.reclac_filter_url(spider)
         pass
     def spider_closed(self, spider, reason):
         pass
@@ -104,7 +108,7 @@ class shixin_extension(object):
                     request = FormRequest(spider.start_urls[0],
                         formdata={'currentPage': str(i)},
                         callback=spider.listpare,dont_filter=True, meta={'pageNum':str(i)})
-                    spider.queue.push(request)
+                    self.scheduler.queue.push(request)
                 if spider.endIdx == spider.total+1:
                     spider.startIdx = spider.endIdx
                 self.crawler.engine.slot.nextcall.schedule()

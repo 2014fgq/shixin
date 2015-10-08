@@ -30,8 +30,9 @@ class UTelnet(TelnetConsole):
         telnet_vars = TelnetConsole._get_telnet_vars(self)  
         utelnet_vars = {
             'setlevel':self.set_level,
-            'extensions': self.crawler.extensions,
-            'shixin':self.crawler.extensions.middlewares[2]
+            'shixin':self.crawler.extensions.middlewares[2],
+            'scheduler':self.crawler.engine.slot.scheduler,
+            'downloader':self.crawler.engine.downloader
         }
         utelnet_vars = dict(telnet_vars.items() + utelnet_vars.items())
         self.crawler.signals.send_catch_log(update_telnet_vars, telnet_vars=utelnet_vars)

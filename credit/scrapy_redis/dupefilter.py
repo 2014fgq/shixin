@@ -67,3 +67,7 @@ class RFPDupeFilter(BaseDupeFilter):
         with open('sinxin_debug', 'w') as f:
             f.write("")
         self.server.delete(self.key)
+
+    def __len__(self):
+        """Return the length of the duperfilter"""
+        return self.server.scard(self.key)
